@@ -5,6 +5,8 @@
 #include <sys/resource.h>
 #include "pila.h"
 
+#define N 9
+#define I(ROW,COL) ((ROW)*N+(COL))
 #define INTENTOS 1000000
 #define LENPILA	 100
 #define MAX(X,Y) ((X>Y)?X:Y)
@@ -13,7 +15,7 @@ typedef struct{
 	int fila;
 	int columna;
 	int nposibles;
-	int posibles[9];
+	int posibles[N];
 }memoriaSudoku;
 
 char bufpila[sizeof(memoriaSudoku)*LENPILA];
@@ -23,26 +25,26 @@ int maxstack=0;
 void imprimirSudoku(int *s)
 {
 	int i,j;
-	for(i=0;i<9;i++)
+	for(i=0;i<N;i++)
 	{
 		if(!(i%3))
 		{
-			for(j=0;j<13;j++)
+			for(j=0;j<N+4;j++)
 				printf("-");
 			printf("\n");
 		}	
-		for(j=0;j<9;j++)
+		for(j=0;j<N;j++)
 		{
 			if(!(j%3))
 				printf("|");
-			if(s[i*9+j])
-				printf("%d",s[i*9+j]);
+			if(s[I(i,j)])
+				printf("%d",s[I(i,j)]);
 			else
 				printf(" ");
 		}
 		printf("|\n");
 	}
-	for(j=0;j<13;j++)
+	for(j=0;j<N+4;j++)
 		printf("-");
 	printf("\n");
 }
@@ -50,39 +52,39 @@ void imprimirSudoku(int *s)
 void cargarSudoku(int *s, char *str)
 {
 	int i,j;
-	for(i=0;i<9;i++)
-		for(j=0;j<9;j++)
-			s[i*9+j]=str[i*9+j]-'0';
+	for(i=0;i<N;i++)
+		for(j=0;j<N;j++)
+			s[I(i,j)]=str[I(i,j)]-'0';
 }
 
 int esfijo(int *s,int fila, int col)
 {
 	int ret = 0;
-	if(s[fila*9+col]) ret++;
+	if(s[I(fila,col)]) ret++;
 	return ret;
 }
 
 void limpiarPosibles(int *posibles)
 {
 	int i;
-	for(i=0;i<9;i++) 
+	for(i=0;i<N;i++) 
 		posibles[i]=1;
 }
 
 void buscarFila(int *s, int fila, int *posibles)
 {
 	int i;
-	for(i=0;i<9;i++)
-		if(s[fila*9+i] && posibles[s[fila*9+i]-1])
-			posibles[s[fila*9+i]-1]--;
+	for(i=0;i<N;i++)
+		if(s[I(fila,i)] && posibles[s[I(fila,i)]-1])
+			posibles[s[I(fila,i)]-1]--;
 }
 
 void buscarCol(int *s, int col, int *posibles)
 {
 	int i;
-	for(i=0;i<9;i++)
-		if(s[i*9+col] && posibles[s[i*9+col]-1])
-			posibles[s[i*9+col]-1]--;
+	for(i=0;i<N;i++)
+		if(s[I(i,col)] && posibles[s[I(i,col)]-1])
+			posibles[s[I(i,col)]-1]--;
 }
 
 void buscarGrilla(int *s, int fila, int col, int *posibles)
@@ -95,8 +97,8 @@ void buscarGrilla(int *s, int fila, int col, int *posibles)
 	int j1 = j0+3;
 	for(i=i0;i<i1;i++)
 		for(j=j0;j<j1;j++)
-			if(s[i*9+j] && posibles[s[i*9+j]-1])
-				posibles[s[i*9+j]-1]--;
+			if(s[I(i,j)] && posibles[s[I(i,j)]-1])
+				posibles[s[I(i,j)]-1]--;
 				
 }
 
@@ -104,7 +106,7 @@ int contarPosibles(int *posibles)
 {
 	int i;
 	int j;
-	for(i=0,j=0;i<9;i++)
+	for(i=0,j=0;i<N;i++)
 		if(posibles[i]) j++;
 	return j;
 }
@@ -113,7 +115,7 @@ int primerPosible(int *posibles)
 {
 	int i;
 	int j;
-	for(i=0,j=0;i<9;i++)
+	for(i=0,j=0;i<N;i++)
 		if(posibles[i])
 		{
 			j=i+1;
@@ -126,7 +128,7 @@ int eliminaPrimerPosible(int *posibles)
 {
 	int i;
 	int j;
-	for(i=0,j=0;i<9;i++)
+	for(i=0,j=0;i<N;i++)
 		if(posibles[i])
 		{
 			posibles[i]=0;
@@ -141,9 +143,9 @@ int noestaresuelto(int *s)
 {
 	int i,j;
 	int ret = 0;
-	for(i=0;i<9;i++)
-		for(j=0;j<9;j++)
-			if(!s[i*9+j])
+	for(i=0;i<N;i++)
+		for(j=0;j<N;j++)
+			if(!s[I(i,j)])
 			{
 				ret++;
 				break;
@@ -154,11 +156,11 @@ int noestaresuelto(int *s)
 int decisionMinima(int *s, int *fila, int *col, int *p)
 {
 	int i,j,k;
-	int posibles[9];
-	k=10;
-	for(i=0;i<9;i++)
+	int posibles[N];
+	k=N+1;
+	for(i=0;i<N;i++)
 	{
-		for(j=0;j<9;j++)
+		for(j=0;j<N;j++)
 		{
 			if(esfijo((int*)s,i,j))
 				continue;
@@ -182,7 +184,7 @@ int resolver(int *s, int intentos)
 {
 	memoriaSudoku ms;
 	int i,j,k;
-	int p[9];
+	int p[N];
 	k=0;
 	do {
 		switch(decisionMinima(s,&i,&j,&p[0]))
@@ -195,7 +197,7 @@ int resolver(int *s, int intentos)
 					{
 						if(ms.nposibles==1)
 						{
-							s[ms.fila*9+ms.columna]=0;
+							s[I(ms.fila,ms.columna)]=0;
 							continue;
 						}
 						else
@@ -203,9 +205,13 @@ int resolver(int *s, int intentos)
 							eliminaPrimerPosible(ms.posibles);
 							if(contarPosibles(ms.posibles))
 							{
-								s[ms.fila*9+ms.columna]=primerPosible(ms.posibles);
+								s[I(ms.fila,ms.columna)]=primerPosible(ms.posibles);
 								ms.nposibles=contarPosibles(ms.posibles);
-								push(&pilaSudoku,&ms);
+								if(push(&pilaSudoku,&ms))
+								{
+									k=intentos-1;
+									fprintf(stderr,"Stack overflow\n");
+								}
 								maxstack=MAX(maxstack,enpila(&pilaSudoku));
 								break;
 							}
@@ -219,8 +225,12 @@ int resolver(int *s, int intentos)
 				ms.columna=j;
 				ms.nposibles=contarPosibles(p);
 				memcpy(ms.posibles,p,sizeof(p));
-				s[i*9+j]= primerPosible(p);
-				push(&pilaSudoku,&ms);
+				s[I(i,j)]= primerPosible(p);
+				if(push(&pilaSudoku,&ms))
+				{
+					k=intentos-1;
+					fprintf(stderr,"Stack overflow\n");
+				}
 				maxstack=MAX(maxstack,enpila(&pilaSudoku));
 				break;
 			default:
@@ -230,9 +240,13 @@ int resolver(int *s, int intentos)
 				ms.columna=j;
 				ms.nposibles=contarPosibles(p);
 				memcpy(ms.posibles,p,sizeof(p));
-				s[i*9+j]= primerPosible(p);
-				push(&pilaSudoku,&ms);
-				maxstack=MAX(maxstack,enpila(&pilaSudoku));				
+				s[I(i,j)]= primerPosible(p);				
+				if(push(&pilaSudoku,&ms))
+				{
+					k=intentos-1;
+					fprintf(stderr,"Stack overflow\n");
+				}
+				maxstack=MAX(maxstack,enpila(&pilaSudoku));
 				break;
 				
 		}
@@ -241,7 +255,7 @@ int resolver(int *s, int intentos)
 	return (k<intentos)?k:-1;
 }
 
-
+//Function published at http://stackoverflow.com/questions/16764276/measuring-time-in-millisecond-precision
 double get_process_time() {
     struct rusage usage;
     if( 0 == getrusage(RUSAGE_SELF, &usage) ) {
@@ -253,7 +267,7 @@ double get_process_time() {
 
 int main(int argc, char *argv[])
 {
-	int sudoku[9][9];
+	int sudoku[N][N];
 	int k;
 	double start_t, end_t;
 	
@@ -263,7 +277,7 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	if(strlen(argv[1])!=81)
+	if(strlen(argv[1])!=N*N)
 	{
 		fprintf(stderr,"./sudoku [81 numeros, cero para vacios]\n");
 		return EXIT_FAILURE;
