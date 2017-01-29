@@ -1,1 +1,1 @@
-# Simple C backtracking sudoku solver
+# Simple C sudoku solver
