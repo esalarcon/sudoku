@@ -5,7 +5,7 @@
 		int pos;
 		int lenitem;
 		int nitems;
-		int encola;
+		int enpila;
 		void *buf;
 	}PILA;
 

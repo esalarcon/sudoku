@@ -255,7 +255,7 @@ int resolver(int *s, int intentos)
 	return (k<intentos)?k:-1;
 }
 
-//Function published at http://stackoverflow.com/questions/16764276/measuring-time-in-millisecond-precision
+//http://stackoverflow.com/questions/16764276/measuring-time-in-millisecond-precision
 double get_process_time() {
     struct rusage usage;
     if( 0 == getrusage(RUSAGE_SELF, &usage) ) {
@@ -267,7 +267,7 @@ double get_process_time() {
 
 int main(int argc, char *argv[])
 {
-	int sudoku[N][N];
+	int sudoku[N*N];
 	int k;
 	double start_t, end_t;
 	
@@ -286,11 +286,11 @@ int main(int argc, char *argv[])
 
 	initpila(&pilaSudoku, bufpila,sizeof(memoriaSudoku),LENPILA);
 	memset(sudoku,0,sizeof(sudoku));			
-	cargarSudoku((int*)sudoku,argv[1]);	
+	cargarSudoku(sudoku,argv[1]);	
 	start_t = get_process_time();
-	k=resolver((int*)sudoku,INTENTOS);
+	k=resolver(sudoku,INTENTOS);
 	end_t = get_process_time();
-	imprimirSudoku((int*)sudoku);
+	imprimirSudoku(sudoku);
 	if(k>0)
 		printf("Resuelto. %d\tIteraciones\t%d Elementos en pila (max.) - %0.03f s\n",k,maxstack,end_t-start_t);
 	else
