@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
-#include <sys/resource.h>
+#include <time.h>
 #include "pila.h"
 
+#define LEN	256
 #define N 9
 #define I(ROW,COL) ((ROW)*N+(COL))
 #define INTENTOS 1000000
@@ -255,46 +255,58 @@ int resolver(int *s, int intentos)
 	return (k<intentos)?k:-1;
 }
 
-//http://stackoverflow.com/questions/16764276/measuring-time-in-millisecond-precision
+
 double get_process_time() {
-    struct rusage usage;
-    if( 0 == getrusage(RUSAGE_SELF, &usage) ) {
-        return (double)(usage.ru_utime.tv_sec + usage.ru_stime.tv_sec) +
-               (double)(usage.ru_utime.tv_usec + usage.ru_stime.tv_usec) / 1.0e6;
-    }
-    return 0;
+	clock_t uptime = clock() / (CLOCKS_PER_SEC / 1000);
+    return ((double)uptime)/1000.0;
 }
 
 int main(int argc, char *argv[])
 {
+	FILE *fin;
+	char linea[LEN];
 	int sudoku[N*N];
 	int k;
 	double start_t, end_t;
 	
-	if(argc!=2)
+	if(argc<2)
 	{
-		fprintf(stderr,"./sudoku [81 numeros, cero para vacios]\n");
+		fprintf(stderr,"./winsudoku [archivoSudokus] -v\n");
 		return EXIT_FAILURE;
 	}
 
-	if(strlen(argv[1])!=N*N)
+	if(!(fin=fopen(argv[1],"r")))
 	{
-		fprintf(stderr,"./sudoku [81 numeros, cero para vacios]\n");
+		fprintf(stderr,"No se pudo abrir el archivo\n");
 		return EXIT_FAILURE;
-
 	}
 
-	initpila(&pilaSudoku, bufpila,sizeof(memoriaSudoku),LENPILA);
-	memset(sudoku,0,sizeof(sudoku));			
-	cargarSudoku(sudoku,argv[1]);	
-	start_t = get_process_time();
-	k=resolver(sudoku,INTENTOS);
-	end_t = get_process_time();
-	imprimirSudoku(sudoku);
-	if(k>0)
-		printf("Resuelto. %d\tIteraciones\t%d Elementos en pila (max.) - %0.03f s\n",k,maxstack,end_t-start_t);
-	else
-		printf("No pude resolverlo - %0.03f s\n",end_t-start_t);
+	while(fgets(linea,LEN,fin))
+	{
+		if(strlen(linea)<N*N)
+		{
+			fprintf(stderr,"./sudoku [81 numeros, cero para vacios]\n");
+			continue;
+		}
+
+		initpila(&pilaSudoku, bufpila,sizeof(memoriaSudoku),LENPILA);
+		memset(sudoku,0,sizeof(sudoku));
+		cargarSudoku(sudoku,linea);
+		start_t = get_process_time();
+		k=resolver(sudoku,INTENTOS);
+		end_t = get_process_time();
+		if(argc==3)
+		{
+			if(strstr(argv[2],"-v"))
+			{
+				imprimirSudoku(sudoku);
+			}
+		}
+		if(k>0)
+			printf("Resuelto. %d\tIteraciones\t%d Elementos en pila (max.) - %0.03f s\n",k,maxstack,end_t-start_t);
+		else
+			printf("No pude resolverlo - %0.03f s\n",end_t-start_t);
+	}
+	fclose(fin);
 	return EXIT_SUCCESS;
 }
-
